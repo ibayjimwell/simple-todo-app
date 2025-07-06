@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <title>Simple Todo App</title>
+</head>
+<body>
+  <header>
+    <h1 class="fs-2 fw-bold text-center text-primary mt-4">
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-check-square-fill" viewBox="0 0 16 16">
+        <path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm10.03 4.97a.75.75 0 0 1 .011 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.75.75 0 0 1 1.08-.022z"/>
+      </svg>
+      Simple Todo App
+    </h1>
+    <h2 class="fs-4 fw-normal text-center">Create and manage a simple task.</h2>
+  </header>
+
+  <main class="container mt-5">
+    <div class="card">
+      <div class="card-header fw-semibold fs-5">Dashboard</div>
+      <div class="card-body">
+        <div class="row g-4 align-items-center text-center">
+          <div class="col-md-3">
+            <div class="fw-semibold fs-5">{{ totalTasks or 0 }}</div>
+            <div>Total Todos</div>
+          </div>
+          <div class="col-md-3">
+            <div class="fw-semibold fs-5">{{ completedTasks or 0 }}</div>
+            <div>Completed</div>
+          </div>
+          <div class="col-md-3">
+            <div class="fw-semibold fs-5">{{ pendingTasks or 0 }}</div>
+            <div>Pending</div>
+          </div>
+          <div class="col-md-3">
+            <div class="fw-semibold fs-5">{{ progress or 0 }}%</div>
+            <div>Progress</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-2"></div>
+
+    <div class="card">
+      <div class="card-header fw-semibold fs-5 d-flex align-items-center gap-3 justify-content-between">
+        <div>Your Tasks</div>
+        <div class="d-inline-flex gap-2">
+          <form action="/task/complete/all" method="POST">
+            <button type="submit" class="btn btn-outline-success">Check all</button>
+          </form>
+          <form action="/task/delete/all" method="POST">
+            <button type="submit" class="btn btn-outline-danger">Delete all</button>
+          </form>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if tasks and tasks|length > 0 %}
+          {% for task in tasks %}
+            {% set color = 'danger' if task.priorityRate == 'Hard' else 'warning' if task.priorityRate == 'Medium' else 'success' %}
+            <div class="alert alert-{{ color }} d-flex align-items-center gap-3 justify-content-between" role="alert">
+              <div class="d-flex align-items-center gap-3">
+                <div class="badge text-bg-{{ color }}">{{ task.priorityRate }}</div>
+                <div class="{{ 'text-decoration-line-through' if task.completed }}">{{ task.todo }}</div>
+              </div>
+              <div class="btn-group" role="group">
+                <form action="/task/complete/{{ task._id }}" id="completeForm{{ task._id }}" method="POST"></form>
+                <button type="submit" form="completeForm{{ task._id }}" class="btn btn-success fw-bold" {% if task.completed %}disabled{% endif %}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                    <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>
+                  </svg>
+                </button>
+                <form action="/task/delete/{{ task._id }}" id="deleteForm{{ task._id }}" method="POST"></form>
+                <button type="submit" form="deleteForm{{ task._id }}" class="btn btn-danger fw-bold">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="alert alert-info text-center" role="alert">No tasks yet.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="p-2"></div>
+
+    <div class="card">
+      <div class="card-header fw-semibold fs-5">Add a Task</div>
+      <div class="card-body">
+        <form class="row g-3 align-items-center" action="/task/add" method="POST">
+          <div class="col-md-6">
+            <input type="text" class="form-control" placeholder="Enter your todo here" name="todo" />
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" name="priorityRate">
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+          <div class="col-md-3 d-grid">
+            <button type="submit" class="btn btn-primary mb-0">Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="p-2"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js"></script>
+</body>
+</html>
